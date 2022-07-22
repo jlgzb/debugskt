@@ -69,11 +69,11 @@ class unit_gcn(nn.Module):
             A_switch.update({'offset': self.A + self.PA, 'importance': self.A * self.PA})
         A = A_switch[self.adaptive]
 
-        if self.conv_pos == 'pre':
+        if self.conv_pos == 'pre': # by gzb: N C T V -> N K C T V -> N C T V
             x = self.conv(x)
             x = x.view(n, self.num_subsets, -1, t, v)
             x = torch.einsum('nkctv,kvw->nctw', (x, A)).contiguous()
-        elif self.conv_pos == 'post':
+        elif self.conv_pos == 'post': # by gzb: N C T V -> N K C T V -> N C T V
             x = torch.einsum('nctv,kvw->nkctw', (x, A)).contiguous()
             x = x.view(n, -1, t, v)
             x = self.conv(x)

@@ -54,9 +54,9 @@ class mstcn(nn.Module):
         self.out_channels = out_channels
         self.act = nn.ReLU()
 
-        if mid_channels is None:
-            mid_channels = out_channels // num_branches
-            rem_mid_channels = out_channels - mid_channels * (num_branches - 1)
+        if mid_channels is None: # by gzb: e.g. out_C==64, [14, 10, 10, 10, 10, 10]
+            mid_channels = out_channels // num_branches  # by gbz: s.t. mid_channels=10
+            rem_mid_channels = out_channels - mid_channels * (num_branches - 1) # by gzb: rem_mid_C==14
         else:
             assert isinstance(mid_channels, float) and mid_channels > 0
             mid_channels = int(out_channels * mid_channels)
@@ -72,7 +72,7 @@ class mstcn(nn.Module):
                 branches.append(nn.Conv2d(in_channels, branch_c, kernel_size=1, stride=(stride, 1)))
                 continue
             assert isinstance(cfg, tuple)
-            if cfg[0] == 'max':
+            if cfg[0] == 'max':  # by gzb: CBR+maxpool
                 branches.append(
                     nn.Sequential(
                         nn.Conv2d(in_channels, branch_c, kernel_size=1), nn.BatchNorm2d(branch_c), self.act,
@@ -85,7 +85,7 @@ class mstcn(nn.Module):
             branches.append(branch)
 
         self.branches = nn.ModuleList(branches)
-        tin_channels = mid_channels * (num_branches - 1) + rem_mid_channels
+        tin_channels = mid_channels * (num_branches - 1) + rem_mid_channels # by gzb: tin_C is equal to out_C
 
         self.transform = nn.Sequential(
             nn.BatchNorm2d(tin_channels), self.act, nn.Conv2d(tin_channels, out_channels, kernel_size=1))

@@ -66,15 +66,15 @@ class Graph:
     """
 
     def __init__(self,
-                 layout='coco',
-                 mode='spatial',
+                 layout='coco', # can be cocolr, which is added by jlgzb
+                 mode='spatial', # can be spatial_lr, which is added by jlgzb
                  max_hop=1):
 
         self.max_hop = max_hop
         self.layout = layout
         self.mode = mode
 
-        assert layout in ['openpose', 'nturgb+d', 'coco']
+        assert layout in ['openpose', 'nturgb+d', 'coco', 'cocolr'] # cocolr is added by jlgzb
 
         self.get_layout(layout)
         self.hop_dis = get_hop_distance(self.num_node, self.inward, max_hop)
@@ -112,8 +112,32 @@ class Graph:
                 (1, 0), (3, 1), (2, 0), (4, 2)
             ]
             self.center = 0
+        elif layout == 'cocolr':
+            self.num_node = 17
+            self.inward = [
+                (15, 13), (13, 11), (16, 14), (14, 12), (11, 5), (12, 6),
+                (9, 7), (7, 5), (10, 8), (8, 6), (5, 0), (6, 0),
+                (1, 0), (3, 1), (2, 0), (4, 2), 
+                (10, 9)
+            ]
+            self.neightbor_left = [
+                (15, 13), (13, 11), (9, 7), (7, 5), (1, 0), (3, 1), (11, 5), (5, 0), # inward_left
+                (13, 15), (11, 13), (7, 9), (5, 7), (0, 1), (1, 3), (5, 11), (0, 5),  # ourward_left
+                (15, 9), (9, 15),
+                (9, 10)
+            ]
+            self.neightbor_right = [
+                (16, 14), (14, 12), (10, 8), (8, 6), (2, 0), (4, 2), (12, 6), (6, 0), # inward_left
+                (14, 16), (12, 14), (8, 10), (6, 8), (0, 2), (2, 4), (6, 12), (0, 6),  # ourward_left
+                (16, 10), (10, 16),
+                (10, 9)
+            ]
+
+            self.center = 0
+
         else:
             raise ValueError(f'Do Not Exist This Layout: {layout}')
+
         self.self_link = [(i, i) for i in range(self.num_node)]
         self.outward = [(j, i) for (i, j) in self.inward]
         self.neighbor = self.inward + self.outward
@@ -146,6 +170,15 @@ class Graph:
         In = normalize_digraph(edge2mat(self.inward, self.num_node))
         Out = normalize_digraph(edge2mat(self.outward, self.num_node))
         A = np.stack((Iden, In, Out))
+        return A
+
+    def spatial_lr(self):
+        Iden = edge2mat(self.self_link, self.num_node)
+        In = normalize_digraph(edge2mat(self.inward, self.num_node))
+        Out = normalize_digraph(edge2mat(self.outward, self.num_node))
+        left = normalize_digraph(edge2mat(self.neightbor_left, self.num_node))
+        right = normalize_digraph(edge2mat(self.neightbor_right, self.num_node))
+        A = np.stack((Iden, In, Out, left, right))
         return A
 
     def binary_adj(self):

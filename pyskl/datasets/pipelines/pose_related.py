@@ -372,8 +372,8 @@ class MergeSkeFeat:
 
     def __call__(self, results):
         feats = []
-        for name in self.feat_list:
-            feats.append(results.pop(name))
+        for name in self.feat_list: # by gzb: 'j'
+            feats.append(results.pop(name)) # by gzb: only get the data whose type in self.feat_list
         feats = np.concatenate(feats, axis=self.axis)
         results[self.target] = feats
         return results
@@ -381,14 +381,22 @@ class MergeSkeFeat:
 
 @PIPELINES.register_module()
 class GenSkeFeat:
+    '''by gzb:
+    feats:
+        'j': 'j'
+        'b': 'b' + 'j'
+        'jm': 'j' + 'jm'
+        'bm': 'b' + 'j' + 'bm'
+
+    '''
     def __init__(self, dataset='nturgb+d', feats=['j'], axis=-1):
         self.dataset = dataset
         self.feats = feats
         self.axis = axis
         ops = []
         if 'b' in feats or 'bm' in feats:
-            ops.append(JointToBone(dataset=dataset, target='b'))
-        ops.append(Rename({'keypoint': 'j'}))
+            ops.append(JointToBone(dataset=dataset, target='b')) # by gzb: generate 'b' datasets
+        ops.append(Rename({'keypoint': 'j'})) # by gzb: generate 'j' datasets
         if 'jm' in feats:
             ops.append(ToMotion(dataset=dataset, source='j', target='jm'))
         if 'bm' in feats:

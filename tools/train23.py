@@ -37,7 +37,7 @@ def parse_args():
         '--test-best',
         action='store_true',
         help='whether to test the best checkpoint (if applicable) after training')
-    parser.add_argument('--seed', type=int, default=None, help='random seed')
+    parser.add_argument('--seed', type=int, default=1337, help='random seed')
     parser.add_argument(
         '--deterministic',
         action='store_true',
