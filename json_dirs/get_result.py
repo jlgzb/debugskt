@@ -160,16 +160,16 @@ def main():
         #if list_label[idx] == key[0]: # top 1, false pred: skip true pred
         #    continue
 
-        #if list_label[idx] != key[0]: # top1, true pred: skip false pred
-        #    continue
-
-        #if (list_label[idx] not in special_labels) or (key[0] not in special_labels):
-        #    continue
-
-        if (list_label[idx] != 11): # or (key[0] != ):
+        if list_label[idx] != key[0]: # top1, true pred: skip false pred
             continue
-        if (key[0] != 11):
+
+        if (list_label[idx] not in special_labels) or (key[0] not in special_labels):
             continue
+
+        #if (list_label[idx] != 11): # or (key[0] != ):
+        #    continue
+        #if (key[0] != 11):
+        #    continue
 
         top_1 = key[0]
         top_2 = key[1]
@@ -271,8 +271,8 @@ def statis_labels():
 if __name__ == '__main__':
     print ("Begin executing !")
     #print ('label, top1, top2, top1-prob, top2-prob')
-    #main()
-    main2()
+    main()
+    #main2()
 
     #statis_labels()
 
