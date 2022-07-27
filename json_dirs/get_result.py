@@ -160,16 +160,16 @@ def main():
         #if list_label[idx] == key[0]: # top 1, false pred: skip true pred
         #    continue
 
-        #if list_label[idx] != key[0]: # top1, true pred: skip false pred
-        #    continue
-
-        #if (list_label[idx] not in special_labels) or (key[0] not in special_labels):
-        #    continue
-
-        if (list_label[idx] != 11): # or (key[0] != ):
+        if list_label[idx] != key[0]: # top1, true pred: skip false pred
             continue
-        if (key[0] != 11):
+
+        if (list_label[idx] not in special_labels) or (key[0] not in special_labels):
             continue
+
+        #if (list_label[idx] != 11): # or (key[0] != ):
+        #    continue
+        #if (key[0] != 11):
+        #    continue
 
         top_1 = key[0]
         top_2 = key[1]
@@ -228,8 +228,15 @@ def main2():
         #print ('top1: {}; top2: {}; top1_prob: {}; top2_prob: {}.'. \
         #    format(top_1, top_2, top_1_prob, top_2_prob))
 
+        if top_1 in [10, 11, 28, 29]:
+            #tmp = (top_1_prob + top_2_prob)/2
+            if top_1_prob < (top_2_prob * 2 * 1.02 ):
+                top_1 = key[1]
+                top_2 = key[0]
+
+
         # top k
-        print ('{}, {}, {}, {}, {}, {}'.format(list_label[idx], key[0], key[1], '#####', top_1_prob, top_2_prob))
+        #print ('{}, {}, {}, {}, {}, {}'.format(list_label[idx], key[0], key[1], '#####', top_1_prob, top_2_prob))
 
         if top_1 == list_label[idx]:
             _true += 1
