@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # flake8: noqa: F401
-from .base import BaseHead
+from .base import BaseHead, BaseHeadCom
 from .simple_head import GCNHead, I3DHead, SimpleHead, SlowFastHead, TSNHead
 from .simple_head import GCNHeadCom, SimpleHeadCom
 

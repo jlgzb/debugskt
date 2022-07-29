@@ -3,7 +3,7 @@ import torch.nn as nn
 from mmcv.cnn import normal_init
 
 from ..builder import HEADS
-from .base import BaseHead
+from .base import BaseHead, BaseHeadCom
 
 
 @HEADS.register_module()
@@ -159,7 +159,7 @@ class TSNHead(BaseHead):
 
 
 @HEADS.register_module()
-class SimpleHeadCom(BaseHead):
+class SimpleHeadCom(BaseHeadCom):
     """ A simple classification head.
 
     Args:

@@ -312,8 +312,8 @@ class STGCNBlockCom(nn.Module):
         x, x1 = self.gcn(x, x1, A) # -1 C T V; -1 C 10 V
         x = self.tcn(x) + res
 
-        res1 = self.residual(x[:, :, -10:, :]) # by gzb
-        x1 = self.tcn1(x1) + res1
+        #res1 = self.residual(x1) # by gzb
+        x1 = self.tcn1(x1) #+ res1
 
         return self.relu(x), self.relu1(x1)
 
@@ -399,12 +399,12 @@ class STGCNCom(nn.Module):
         for i in range(self.num_stages):
             #x = self.gcn[i](x)
             if i == 0:
-                x, x1 = self.gcn[i](x, x)
+                x, x1 = self.gcn[i](x, x[:, :, -10:, :])
             else:
                 x, x1 = self.gcn[i](x, x1)
 
         x = x.reshape((N, M) + x.shape[1:])
 
-        x1 = x1.reshape((N, M)) + x1.shape[1:]
-        return x
+        x1 = x1.reshape((N, M) + x1.shape[1:])
+        return x, x1
 

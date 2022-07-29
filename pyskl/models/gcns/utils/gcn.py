@@ -125,6 +125,7 @@ class unit_gcn_local(nn.Module):
 
         if self.conv_pos == 'pre':
             self.conv = nn.Conv2d(in_channels, out_channels * A.size(0), 1)
+            #self.conv1 = nn.Conv2d(in_channels, out_channels * A.size(0), 1) # by gzb
         elif self.conv_pos == 'post':
             self.conv = nn.Conv2d(A.size(0) * in_channels, out_channels, 1)
 
@@ -139,7 +140,13 @@ class unit_gcn_local(nn.Module):
     def forward(self, x, x1, A=None):
         """Defines the computation performed at every call."""
         n, c, t, v = x.shape
+        _, _, t1, v = x1.shape
         res = self.down(x) if self.with_res else 0
+
+        if x1.shape[2] !=10: 
+            res1 = self.down(x1[: , :,-10: ,:] ) if self.with_res else 0 # by gzb: collected
+        else:
+            res1 = self.down(x1) if self.with_res else 0 # by gzb: collected
         
 
         A_switch = {None: self.A, 'init': self.A}
@@ -152,21 +159,15 @@ class unit_gcn_local(nn.Module):
             x = x.view(n, self.num_subsets, -1, t, v)
             x = torch.einsum('nkctv,kvw->nctw', (x, A)).contiguous()
 
-            if x1.shape[2] == 10:
-                res1 = self.down(x1) # by gzb: collected
-            else:
-                res1 = self.down(x1[:, :, -10:, :])
+            x1 = self.conv(x1) # N 
+            x1 = x1.view(n, self.num_subsets, -1, t1, v)
+            x1 = torch.einsum('nkctv,kvw->nctw', (x1, A)).contiguous()
 
-            # by gzb: 20220727
-            x1 = torch.einsum('nkctv, kvw->nctw', (x[:, :, :, -10:, :], A)).contiguous() # N C 10 V
+
         elif self.conv_pos == 'post': # by gzb: N C T V -> N K C T V -> N C T V
             x = torch.einsum('nctv,kvw->nkctw', (x, A)).contiguous()
             x = x.view(n, -1, t, v)
             x = self.conv(x)
-
-            # by gzb: 20220727
-            x1 = None
-            res1 = None
 
         return self.act(self.bn(x) + res), self.act(self.bn(x1) + res1)
 
