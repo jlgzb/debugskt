@@ -60,4 +60,4 @@ log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])
 
 # runtime settings
 log_level = 'INFO'
-work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/b-hrnet-clip20-gpu2-time5-bs32-lr01-cv'
+work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/b-hrnet-cliplen100-gpu2-time5-bs32-lr01-cv'

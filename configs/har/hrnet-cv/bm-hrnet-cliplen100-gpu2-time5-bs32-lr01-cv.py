@@ -12,7 +12,7 @@ dataset_type = 'PoseDataset'
 ann_file = 'data/nturgbd/ntu60_hrnet.pkl'
 train_pipeline = [
     dict(type='PreNormalize2D'),
-    dict(type='GenSkeFeat', dataset='coco', feats=['b']),
+    dict(type='GenSkeFeat', dataset='coco', feats=['bm']),
     dict(type='UniformSample', clip_len=100),
     dict(type='PoseDecode'),
     dict(type='FormatGCNInput', num_person=2),
@@ -21,7 +21,7 @@ train_pipeline = [
 ]
 val_pipeline = [
     dict(type='PreNormalize2D'),
-    dict(type='GenSkeFeat', dataset='coco', feats=['b']),
+    dict(type='GenSkeFeat', dataset='coco', feats=['bm']),
     dict(type='UniformSample', clip_len=100, num_clips=1, test_mode=True),
     dict(type='PoseDecode'),
     dict(type='FormatGCNInput', num_person=2),
@@ -30,7 +30,7 @@ val_pipeline = [
 ]
 test_pipeline = [
     dict(type='PreNormalize2D'),
-    dict(type='GenSkeFeat', dataset='coco', feats=['b']),
+    dict(type='GenSkeFeat', dataset='coco', feats=['bm']),
     dict(type='UniformSample', clip_len=100, num_clips=10, test_mode=True),
     dict(type='PoseDecode'),
     dict(type='FormatGCNInput', num_person=2),
@@ -38,7 +38,7 @@ test_pipeline = [
     dict(type='ToTensor', keys=['keypoint'])
 ]
 data = dict(
-    videos_per_gpu=64,
+    videos_per_gpu=32,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -60,4 +60,4 @@ log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])
 
 # runtime settings
 log_level = 'INFO'
-work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/b-hrnet-clip20-gpu2-time5-bs64-lr01-cv'
+work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/bm-hrnet-cliplen100-gpu2-time5-bs32-lr01-cv'
