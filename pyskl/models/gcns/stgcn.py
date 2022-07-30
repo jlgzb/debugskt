@@ -8,6 +8,10 @@ from ...utils import Graph, cache_checkpoint
 from ..builder import BACKBONES
 from .utils import mstcn, unit_gcn, unit_tcn, unit_gcn_local
 
+# by gzb: for parallel gtcn
+from .gtcn_coco import GCNBlock, CNNBlock
+from .tools_cigcn import unit_tcn as unit_tcn2
+
 EPS = 1e-4
 
 
@@ -132,7 +136,7 @@ class STGCN(nn.Module):
         x = x.view(N, M, V, C, T).permute(0, 1, 3, 4, 2).contiguous().view(N * M, C, T, V)
 
         for i in range(self.num_stages):
-            x = self.gcn[i](x)
+            x = self.gcn[i](x) # by gzb: N*M C*4, T/4 V
 
         x = x.reshape((N, M) + x.shape[1:])
         return x
@@ -408,3 +412,101 @@ class STGCNCom(nn.Module):
         x1 = x1.reshape((N, M) + x1.shape[1:])
         return x, x1
 
+# 20220730
+@BACKBONES.register_module()
+class STGCNParaGT(nn.Module):
+
+    def __init__(self,
+                 graph_cfg,
+                 in_channels=3,
+                 base_channels=64,
+                 data_bn_type='VC',
+                 ch_ratio=2,
+                 num_person=2,  # * Only used when data_bn_type == 'MVC'
+                 num_stages=10,
+                 inflate_stages=[5, 8],
+                 down_stages=[5, 8],
+                 pretrained=None,
+                 **kwargs):
+        super().__init__()
+
+        self.graph = Graph(**graph_cfg)
+        A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
+        self.data_bn_type = data_bn_type
+        self.kwargs = kwargs
+
+        #B = self.graph.A
+
+        if data_bn_type == 'MVC':
+            self.data_bn = nn.BatchNorm1d(num_person * in_channels * A.size(1))
+        elif data_bn_type == 'VC':
+            self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))
+        else:
+            self.data_bn = nn.Identity()
+
+        lw_kwargs = [cp.deepcopy(kwargs) for i in range(num_stages)]
+        for k, v in kwargs.items():
+            if isinstance(v, tuple) and len(v) == num_stages:
+                for i in range(num_stages):
+                    lw_kwargs[i][k] = v[i]
+        lw_kwargs[0].pop('tcn_dropout', None)
+
+        self.in_channels = in_channels
+        self.base_channels = base_channels
+        self.ch_ratio = ch_ratio
+        self.inflate_stages = inflate_stages
+        self.down_stages = down_stages
+
+        modules = []
+        if self.in_channels != self.base_channels:
+            modules = [STGCNBlock(in_channels, base_channels, A.clone(), 1, residual=False, **lw_kwargs[0])]
+
+        inflate_times = 0
+        for i in range(2, num_stages + 1):
+            stride = 1 + (i in down_stages)
+            in_channels = base_channels
+            if i in inflate_stages:
+                inflate_times += 1
+            out_channels = int(self.base_channels * self.ch_ratio ** inflate_times + EPS)
+            base_channels = out_channels
+            modules.append(STGCNBlock(in_channels, out_channels, A.clone(), stride, **lw_kwargs[i - 1]))
+
+        if self.in_channels == self.base_channels:
+            num_stages -= 1
+
+        self.num_stages = num_stages
+        self.gcn = nn.ModuleList(modules)
+        self.pretrained = pretrained
+
+        # by gzb: for parallel TCN GCN
+        self.para1_tcn = CNNBlock(in_channels=256, out_channels=256, dilations=[1,2])
+        self.para2_gcn = GCNBlock(in_channels=256, out_channels=256, A=A.clone(), adaptive=True)
+        self.uni_tcn = unit_tcn2(256 * 2, 256 * 2, seg=25, mode='TV')
+                    
+        
+
+    def init_weights(self):
+        if isinstance(self.pretrained, str):
+            self.pretrained = cache_checkpoint(self.pretrained)
+            load_checkpoint(self, self.pretrained, strict=False)
+
+    def forward(self, x):
+        N, M, T, V, C = x.size()
+        x = x.permute(0, 1, 3, 4, 2).contiguous() # by gzb: N M V C T
+        if self.data_bn_type == 'MVC':
+            x = self.data_bn(x.view(N, M * V * C, T))
+        else:
+            x = self.data_bn(x.view(N * M, V * C, T))
+        x = x.view(N, M, V, C, T).permute(0, 1, 3, 4, 2).contiguous().view(N * M, C, T, V)
+
+        for i in range(self.num_stages):
+            x = self.gcn[i](x) # by gzb: N*M C*4, T/4 V
+
+        x_tcn = self.para1_tcn(x) # -1 256 25 17
+        x_gcn = self.para2_gcn(x) # -1 256 25 17
+
+        x = torch.concat([x_tcn, x_gcn], dim=1) # -1 512 25 17
+        x = self.uni_tcn(x) # -1 512 25 1
+
+        x = x.reshape((N, M) + x.shape[1:]) # N M 512 25 1
+        return x
