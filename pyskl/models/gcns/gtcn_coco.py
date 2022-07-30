@@ -2385,10 +2385,10 @@ class Djnt17Coco(nn.Module):
         self.l2 = GCN_TCN(base_channel, base_channel, A, adaptive=adaptive)
         self.l3 = GCN_TCN(base_channel, base_channel, A, adaptive=adaptive)
         self.l4 = GCN_TCN(base_channel, base_channel, A, adaptive=adaptive)
-        self.l5 = GCN_TCN(base_channel, base_channel*2, A, stride=2, adaptive=adaptive)
+        self.l5 = GCN_TCN(base_channel, base_channel*2, A, stride=2, adaptive=adaptive) # N 128 T/2 V
         self.l6 = GCN_TCN(base_channel*2, base_channel*2, A, adaptive=adaptive)
         self.l7 = GCN_TCN(base_channel*2, base_channel*2, A, adaptive=adaptive)
-        self.l8 = GCN_TCN(base_channel*2, base_channel*4, A, stride=2, adaptive=adaptive)
+        self.l8 = GCN_TCN(base_channel*2, base_channel*4, A, stride=2, adaptive=adaptive) # N 256 T/4 v
         self.l9 = GCN_TCN(base_channel*4, base_channel*4, A, adaptive=adaptive)
         self.l10 = GCN_TCN(base_channel*4, base_channel*4, A, adaptive=adaptive)
 

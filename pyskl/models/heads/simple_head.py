@@ -80,11 +80,20 @@ class SimpleHead(BaseHead):
             if self.mode == 'GCN':
                 pool = nn.AdaptiveAvgPool2d(1)
                 N, M, C, T, V = x.shape
-                x = x.reshape(N * M, C, T, V)
+                x = x.reshape(N * M, C, T, V) # by gzb: N*M 256 100/4 17
 
-                x = pool(x)
-                x = x.reshape(N, M, C)
-                x = x.mean(dim=1)
+                x = pool(x) # by gzb: N*M 256 1 1
+                x = x.reshape(N, M, C) # by gzb: N M 256
+                x = x.mean(dim=1) # by gzb: N 256
+                
+            if self.mode == 'GTCN':
+                pool = nn.AdaptiveMaxPool2d(1)
+                N, M, C, T, V = x.shape
+                x = x.reshape(N * M, C, T, V) # by gzb: N*M 256 100/4 17
+
+                x = pool(x) # by gzb: N*M 256 1 1
+                x = x.reshape(N, M, C) # by gzb: N M 256
+                x = x.mean(dim=1) # by gzb: N 256
 
         assert x.shape[1] == self.in_c
         if self.dropout is not None:
