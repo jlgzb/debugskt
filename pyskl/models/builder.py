@@ -8,10 +8,18 @@ HEADS = MODELS
 RECOGNIZERS = MODELS
 LOSSES = MODELS
 
+NECKS = MODELS # by gzb
+
+
 
 def build_backbone(cfg):
     """Build backbone."""
     return BACKBONES.build(cfg)
+
+# by gzb
+def build_neck(cfg):
+    """Build neck."""
+    return NECKS.build(cfg)
 
 
 def build_head(cfg):
@@ -36,3 +44,5 @@ def build_model(cfg):
     if obj_type in RECOGNIZERS:
         return build_recognizer(cfg)
     raise ValueError(f'{obj_type} is not registered')
+
+

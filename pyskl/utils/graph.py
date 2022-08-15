@@ -133,7 +133,6 @@ class Graph:
                 (10, 9)
             ]
 
-            self.center = 0
 
         else:
             raise ValueError(f'Do Not Exist This Layout: {layout}')
@@ -180,6 +179,195 @@ class Graph:
         right = normalize_digraph(edge2mat(self.neightbor_right, self.num_node))
         A = np.stack((Iden, In, Out, left, right))
         return A
+
+    def spatial_lr3a(self):
+        Iden = edge2mat(self.self_link, self.num_node)
+        In = normalize_digraph(edge2mat(self.inward, self.num_node))
+        Out = normalize_digraph(edge2mat(self.outward, self.num_node))
+        A = np.stack((Iden, In, Out))
+
+        left = normalize_digraph(edge2mat(self.neightbor_left, self.num_node))
+        right = normalize_digraph(edge2mat(self.neightbor_right, self.num_node))
+
+        A_lr = np.stack((Iden, left, right))
+
+        #A5 = np.stack((Iden, In, Out, left, right))
+
+        return A, A_lr
+
+
+    def binary_adj(self):
+        A = edge2mat(self.inward + self.outward, self.num_node)
+        return A[None]
+
+
+class GraphMulti:
+    """The Graph to model the skeletons.
+
+    Args:
+        layout (str): must be one of the following candidates: 'openpose', 'nturgb+d', 'coco'. Default: 'coco'.
+        mode (str): must be one of the following candidates: 'stgcn_spatial', 'spatial'. Default: 'spatial'.
+        max_hop (int): the maximal distance between two connected nodes.
+            Default: 1
+    """
+
+    def __init__(self,
+                 layout='coco', # can be cocolr, which is added by jlgzb
+                 mode='spatial', # can be spatial_lr, which is added by jlgzb
+                 max_hop=1):
+
+        self.max_hop = max_hop
+        self.layout = layout
+        self.mode = mode
+
+        assert layout in ['openpose', 'nturgb+d', 'coco', 'cocolr'] # cocolr is added by jlgzb
+
+        self.get_layout(layout)
+        self.hop_dis = get_hop_distance(self.num_node, self.inward, max_hop)
+
+        assert hasattr(self, mode), f'Do Not Exist This Mode: {mode}'
+
+        if self.layout == 'cocolr':
+            self.A, self.A_lr, self.A5, self.A_frame = getattr(self, mode)()
+        else:
+            self.A = getattr(self, mode)()
+
+    def __str__(self):
+        if self.layout == "cocolr":
+            return self.A, self.A_lr, self.A5, self.A_frame
+        else:
+            return self.A
+
+    def get_layout(self, layout):
+        if layout == 'openpose':
+            self.num_node = 18
+            self.inward = [
+                (4, 3), (3, 2), (7, 6), (6, 5), (13, 12), (12, 11), (10, 9),
+                (9, 8), (11, 5), (8, 2), (5, 1), (2, 1), (0, 1), (15, 0),
+                (14, 0), (17, 15), (16, 14)
+            ]
+            self.center = 1
+        elif layout == 'nturgb+d':
+            self.num_node = 25
+            neighbor_base = [
+                (1, 2), (2, 21), (3, 21), (4, 3), (5, 21), (6, 5), (7, 6),
+                (8, 7), (9, 21), (10, 9), (11, 10), (12, 11), (13, 1),
+                (14, 13), (15, 14), (16, 15), (17, 1), (18, 17), (19, 18),
+                (20, 19), (22, 8), (23, 8), (24, 12), (25, 12)
+            ]
+            self.inward = [(i - 1, j - 1) for (i, j) in neighbor_base]
+            self.center = 21 - 1
+        elif layout == 'coco':
+            self.num_node = 17
+            self.inward = [
+                (15, 13), (13, 11), (16, 14), (14, 12), (11, 5), (12, 6),
+                (9, 7), (7, 5), (10, 8), (8, 6), (5, 0), (6, 0),
+                (1, 0), (3, 1), (2, 0), (4, 2)
+            ]
+            self.center = 0
+        elif layout == 'cocolr':
+            self.num_node = 17
+            self.inward = [
+                (15, 13), (13, 11), (16, 14), (14, 12), (11, 5), (12, 6),
+                (9, 7), (7, 5), (10, 8), (8, 6), (5, 0), (6, 0),
+                (1, 0), (3, 1), (2, 0), (4, 2), 
+                (10, 9)
+            ]
+            self.neightbor_left = [
+                (15, 13), (13, 11), (9, 7), (7, 5), (1, 0), (3, 1), (11, 5), (5, 0), # inward_left
+                (13, 15), (11, 13), (7, 9), (5, 7), (0, 1), (1, 3), (5, 11), (0, 5),  # ourward_left
+                (15, 9), (9, 15),
+                (9, 10)
+            ]
+            self.neightbor_right = [
+                (16, 14), (14, 12), (10, 8), (8, 6), (2, 0), (4, 2), (12, 6), (6, 0), # inward_left
+                (14, 16), (12, 14), (8, 10), (6, 8), (0, 2), (2, 4), (6, 12), (0, 6),  # ourward_left
+                (16, 10), (10, 16),
+                (10, 9)
+            ]
+
+            self.num_frame = 25
+            self.inward_frame = [
+                (1, 3), (3, 5), (5, 7), (7, 9), (9, 11), (11, 13), 
+                (13, 15), (15, 17), (17, 19), (19, 21), (21, 23), (23, 25),
+                (1, 25), (3, 22), (5, 19), (7, 17), (9, 15), (7, 13)
+            ]
+
+            self.self_link_frame = [(i, i) for i in range(self.num_frame)]
+            self.outward_frame = [(j, i) for (i, j) in self.inward_frame]
+            #self.neighbor_frame = self.inward_frame + self.outward_frame
+
+
+        else:
+            raise ValueError(f'Do Not Exist This Layout: {layout}')
+
+        self.self_link = [(i, i) for i in range(self.num_node)]
+        self.outward = [(j, i) for (i, j) in self.inward]
+        self.neighbor = self.inward + self.outward
+
+    def stgcn_spatial(self):
+        adj = np.zeros((self.num_node, self.num_node))
+        adj[self.hop_dis <= self.max_hop] = 1
+        normalize_adj = normalize_digraph(adj)
+        hop_dis = self.hop_dis
+        center = self.center
+
+        A = []
+        for hop in range(self.max_hop + 1):
+            a_close = np.zeros((self.num_node, self.num_node))
+            a_further = np.zeros((self.num_node, self.num_node))
+            for i in range(self.num_node):
+                for j in range(self.num_node):
+                    if hop_dis[j, i] == hop:
+                        if hop_dis[j, center] >= hop_dis[i, center]:
+                            a_close[j, i] = normalize_adj[j, i]
+                        else:
+                            a_further[j, i] = normalize_adj[j, i]
+            A.append(a_close)
+            if hop > 0:
+                A.append(a_further)
+        return np.stack(A)
+
+    def spatial(self):
+        Iden = edge2mat(self.self_link, self.num_node)
+        In = normalize_digraph(edge2mat(self.inward, self.num_node))
+        Out = normalize_digraph(edge2mat(self.outward, self.num_node))
+        A = np.stack((Iden, In, Out))
+        return A
+
+    def spatial_lr(self):
+        Iden = edge2mat(self.self_link, self.num_node)
+        In = normalize_digraph(edge2mat(self.inward, self.num_node))
+        Out = normalize_digraph(edge2mat(self.outward, self.num_node))
+        left = normalize_digraph(edge2mat(self.neightbor_left, self.num_node))
+        right = normalize_digraph(edge2mat(self.neightbor_right, self.num_node))
+        A = np.stack((Iden, In, Out, left, right))
+        return A
+
+    def spatial_lr3a(self):
+        Iden = edge2mat(self.self_link, self.num_node)
+        In = normalize_digraph(edge2mat(self.inward, self.num_node))
+        Out = normalize_digraph(edge2mat(self.outward, self.num_node))
+        A = np.stack((Iden, In, Out))
+
+        left = normalize_digraph(edge2mat(self.neightbor_left, self.num_node))
+        right = normalize_digraph(edge2mat(self.neightbor_right, self.num_node))
+
+        A_lr = np.stack((Iden, left, right))
+
+        A5 = np.stack((Iden, In, Out, left, right))
+
+        # for frame graph
+        Iden_frame = edge2mat(self.self_link_frame, self.num_frame)
+        In_frame = normalize_digraph(edge2mat(self.inward_frame, self.num_frame))
+        Out_rame = normalize_digraph(edge2mat(self.outward_frame, self.num_frame))
+        A_frame = np.stack((Iden_frame, In_frame, Out_rame))
+
+
+        return A, A_lr, A5, A_frame
+
+
+
 
     def binary_adj(self):
         A = edge2mat(self.inward + self.outward, self.num_node)

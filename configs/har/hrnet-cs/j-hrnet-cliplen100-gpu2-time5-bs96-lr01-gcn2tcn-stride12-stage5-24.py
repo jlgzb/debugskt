@@ -1,12 +1,16 @@
 model = dict(
     type='RecognizerGCN',
     backbone=dict(
-        type='STGCN',
+        type='STGCNSkip2TCNStride12',
         gcn_adaptive='init',
         gcn_with_res=True,
         tcn_type='mstcn',
-        graph_cfg=dict(layout='coco', mode='spatial')),
-    cls_head=dict(type='GTCNHead', num_classes=60, in_channels=256))
+        #pretrained='/lustre/chaixiujuan/gzb/mmlab/debugpyskl/work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs64-lr01/best_top1_acc_epoch_119.pth',
+        graph_cfg=dict(layout='cocolr', mode='spatial_lr3a'),
+        num_stages=5,
+        inflate_stages=[2, 4], # [5, 8],
+        down_stages=[2, 4]),
+    cls_head=dict(type='GCNHead', num_classes=60, in_channels=256))
 
 dataset_type = 'PoseDataset'
 ann_file = 'data/nturgbd/ntu60_hrnet.pkl'
@@ -38,7 +42,7 @@ test_pipeline = [
     dict(type='ToTensor', keys=['keypoint'])
 ]
 data = dict(
-    videos_per_gpu=32,
+    videos_per_gpu=96,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -60,4 +64,4 @@ log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])
 
 # runtime settings
 log_level = 'INFO'
-work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs32-lr01-gtcn'
+work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs96-lr01-gcn2tcn-stride12-stage5-24'
