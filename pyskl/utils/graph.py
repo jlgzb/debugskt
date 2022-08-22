@@ -287,14 +287,15 @@ class GraphMulti:
             ]
 
             self.num_frame = 25
-            self.inward_frame = [
+            inward_frame = [
                 (1, 3), (3, 5), (5, 7), (7, 9), (9, 11), (11, 13), 
                 (13, 15), (15, 17), (17, 19), (19, 21), (21, 23), (23, 25),
                 (1, 25), (3, 22), (5, 19), (7, 17), (9, 15), (7, 13)
             ]
+            self.inward_frame = [(i - 1, j - 1) for (i, j) in inward_frame]
 
             self.self_link_frame = [(i, i) for i in range(self.num_frame)]
-            self.outward_frame = [(j, i) for (i, j) in self.inward_frame]
+            self.outward_frame = [(j - 1, i - 1) for (i, j) in inward_frame]
             #self.neighbor_frame = self.inward_frame + self.outward_frame
 
 

@@ -1,13 +1,14 @@
 model = dict(
     type='RecognizerGCN',
     backbone=dict(
-        type='STGCNSkip2TCNStride12',
+        type='STGCNSkip2TCNStride12Aframe',
         gcn_adaptive='init',
         gcn_with_res=True,
         tcn_type='mstcn',
+        num_stages_frm=1,
         #pretrained='/lustre/chaixiujuan/gzb/mmlab/debugpyskl/work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs64-lr01/best_top1_acc_epoch_119.pth',
         graph_cfg=dict(layout='cocolr', mode='spatial_lr3a')),
-    cls_head=dict(type='GCNHead', num_classes=60, in_channels=256))
+    cls_head=dict(type='GCNHead', num_classes=60, in_channels=512))
 
 dataset_type = 'PoseDataset'
 ann_file = 'data/nturgbd/ntu60_hrnet.pkl'
@@ -39,7 +40,7 @@ test_pipeline = [
     dict(type='ToTensor', keys=['keypoint'])
 ]
 data = dict(
-    videos_per_gpu=96,
+    videos_per_gpu=64,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -54,11 +55,11 @@ optimizer = dict(type='SGD', lr=0.1, momentum=0.9, weight_decay=0.0005, nesterov
 optimizer_config = dict(grad_clip=None)
 # learning policy
 lr_config = dict(policy='CosineAnnealing', min_lr=0, by_epoch=False)
-total_epochs = 130
+total_epochs = 120
 checkpoint_config = dict(interval=total_epochs)
 evaluation = dict(interval=1, metrics=['top_k_accuracy'], topk=(1, 2))
 log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])
 
 # runtime settings
 log_level = 'INFO'
-work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs96-lr01-gcn2tcn-stride12'
+work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs64-lr01-gcn2tcn-stride12-stage6-35-aframe'

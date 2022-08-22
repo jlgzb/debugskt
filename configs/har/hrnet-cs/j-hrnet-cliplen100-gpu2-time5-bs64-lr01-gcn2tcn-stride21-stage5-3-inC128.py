@@ -1,7 +1,7 @@
 model = dict(
     type='RecognizerGCN',
     backbone=dict(
-        type='STGCNSkip2TCNStride12',
+        type='STGCNSkip2TCN',
         gcn_adaptive='init',
         gcn_with_res=True,
         tcn_type='mstcn',
@@ -11,7 +11,7 @@ model = dict(
         num_stages=5,
         inflate_stages=[3], # [5, 8],
         down_stages=[3]),
-    cls_head=dict(type='GCNHead', num_classes=60, in_channels=128))
+    cls_head=dict(type='GCNHead', num_classes=60, in_channels=256))
 
 dataset_type = 'PoseDataset'
 ann_file = 'data/nturgbd/ntu60_hrnet.pkl'
@@ -43,7 +43,7 @@ test_pipeline = [
     dict(type='ToTensor', keys=['keypoint'])
 ]
 data = dict(
-    videos_per_gpu=96,
+    videos_per_gpu=64,
     workers_per_gpu=2,
     test_dataloader=dict(videos_per_gpu=1),
     train=dict(
@@ -65,4 +65,4 @@ log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])
 
 # runtime settings
 log_level = 'INFO'
-work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs96-lr01-gcn2tcn-stride12-stage5-3'
+work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs64-lr01-gcn2tcn-stride21-stage5-3-inC128'

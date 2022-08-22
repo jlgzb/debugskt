@@ -1,7 +1,7 @@
 model = dict(
     type='RecognizerGCN',
     backbone=dict(
-        type='STGCNSkip2TCNStride12',
+        type='STGCNSkip2TCNStride12A5',
         gcn_adaptive='init',
         gcn_with_res=True,
         tcn_type='mstcn',
@@ -61,4 +61,4 @@ log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])
 
 # runtime settings
 log_level = 'INFO'
-work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs96-lr01-gcn2tcn-stride12'
+work_dir = './work_dirs/stgcn++/stgcn++_ntu60_xsub_hrnet/j-hrnet-cliplen100-gpu2-time5-bs96-lr01-gcn2tcn-stride12-stage6-35-a5'
