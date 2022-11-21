@@ -270,7 +270,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         gt_labels = [ann['label'] for ann in self.video_infos]
 
         print ('start to write label...')
-        for _label in gt_labels:
+        for _label in gt_labels:  # by gzb
             print (_label)
 
         for metric in metrics:

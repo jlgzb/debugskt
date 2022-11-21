@@ -68,7 +68,7 @@ class mstcn(nn.Module):
         branches = []
         for i, cfg in enumerate(ms_cfg):
             branch_c = rem_mid_channels if i == 0 else mid_channels
-            if cfg == '1x1':
+            if cfg == '1x1': # by gzb: CBR without Bn and Relu
                 branches.append(nn.Conv2d(in_channels, branch_c, kernel_size=1, stride=(stride, 1)))
                 continue
             assert isinstance(cfg, tuple)
@@ -79,7 +79,7 @@ class mstcn(nn.Module):
                         nn.MaxPool2d(kernel_size=(cfg[1], 1), stride=(stride, 1), padding=(1, 0))))
                 continue
             assert isinstance(cfg[0], int) and isinstance(cfg[1], int)
-            branch = nn.Sequential(
+            branch = nn.Sequential( # by gzb: CBR+CB
                 nn.Conv2d(in_channels, branch_c, kernel_size=1), nn.BatchNorm2d(branch_c), self.act,
                 unit_tcn(branch_c, branch_c, kernel_size=cfg[0], stride=stride, dilation=cfg[1], norm=None))
             branches.append(branch)
